@@ -1,0 +1,119 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.wfuhui.mall.modules.goods.dao.GoodsDao">
+
+    <resultMap type="com.wfuhui.mall.modules.goods.entity.GoodsEntity" id="goodsMap">
+        <result property="id" column="id"/>
+        <result property="goodsName" column="goods_name"/>
+        <result property="price" column="price"/>
+        <result property="picUrl" column="pic_url"/>
+        <result property="describe" column="describe"/>
+        <result property="createTime" column="create_time"/>
+        <result property="barcode" column="barcode"/>
+        <association property="category" javaType="com.wfuhui.mall.modules.goods.entity.CategoryEntity">
+        	<result property="categoryName" column="category_name"/>
+        </association>
+    </resultMap>
+
+	<select id="queryObject" resultType="com.wfuhui.mall.modules.goods.entity.GoodsEntity">
+		select * from mall_goods where id = #{value}
+	</select>
+
+	<select id="queryList" resultMap="goodsMap">
+		select g.id,g.barcode,g.goods_name,g.pic_url,g.category_id,g.price,g.create_time,c.category_name from mall_goods g left join mall_category c on g.category_id = c.id
+		<where>
+			<if test="categoryId != null and categoryId != -1">
+				c.id = #{categoryId}
+			</if>
+			<if test="goodsName != null and goodsName != ''">
+				and g.goods_name like '%${goodsName}%'
+			</if>
+			<if test="userId != null and userId != ''">
+				and g.user_id = #{userId}
+			</if>
+			<if test="barcode != null and barcode != ''">
+				and g.barcode = #{barcode}
+			</if>
+		</where>
+		
+        <choose>
+            <when test="sidx != null and sidx.trim() != ''">
+                order by ${sidx} ${order}
+            </when>
+			<otherwise>
+                order by id desc
+			</otherwise>
+        </choose>
+		<if test="offset != null and limit != null">
+			limit #{offset}, #{limit}
+		</if>
+	</select>
+	
+ 	<select id="queryTotal" resultType="int">
+		select count(*) from mall_goods 
+		<where>
+			<if test="categoryId != null and categoryId != -1">
+				category_id = #{categoryId}
+			</if>
+			<if test="goodsName != null and goodsName != ''">
+				and goods_name like '%${goodsName}%'
+			</if>
+			<if test="userId != null and userId != ''">
+				and user_id = #{userId}
+			</if>
+			<if test="barcode != null and barcode != ''">
+				and barcode = #{barcode}
+			</if>
+		</where>
+	</select>
+	 
+	<insert id="save" parameterType="com.wfuhui.mall.modules.goods.entity.GoodsEntity" useGeneratedKeys="true" keyProperty="id">
+		insert into mall_goods
+		(
+			`goods_name`, 
+			`category_id`, 
+			`barcode`, 
+			`price`, 
+			`pic_url`, 
+			`describe`, 
+			`create_time`
+		)
+		values
+		(
+			#{goodsName}, 
+			#{categoryId}, 
+			#{barcode}, 
+			#{price}, 
+			#{picUrl}, 
+			#{describe}, 
+			#{createTime}
+		)
+	</insert>
+	 
+	<update id="update" parameterType="com.wfuhui.mall.modules.goods.entity.GoodsEntity">
+		update mall_goods 
+		<set>
+			<if test="goodsName != null">`goods_name` = #{goodsName}, </if>
+			<if test="barcode != null">`barcode` = #{barcode}, </if>
+			<if test="categoryId != null">`category_id` = #{categoryId}, </if>
+			<if test="price != null">`price` = #{price}, </if>
+			<if test="picUrl != null">`pic_url` = #{picUrl}, </if>
+			<if test="describe != null">`describe` = #{describe}, </if>
+			<if test="createTime != null">`create_time` = #{createTime}</if>
+		</set>
+		where id = #{id}
+	</update>
+	
+	<delete id="delete">
+		delete from mall_goods where id = #{value}
+	</delete>
+	
+	<delete id="deleteBatch">
+		delete from mall_goods where id in 
+		<foreach item="id" collection="array" open="(" separator="," close=")">
+			#{id}
+		</foreach>
+	</delete>
+
+</mapper>
